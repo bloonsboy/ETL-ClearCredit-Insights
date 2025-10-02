@@ -1,13 +1,14 @@
-ClearCredit Insights - ETL/ELT Pipeline Project
+## ClearCredit Insights - ETL/ELT Pipeline Project
 
 Concept: A fintech analytics platform to help financial institutions better understand consumer credit behaviour. This project demonstrates the data ingestion pipelines into a centralized Snowflake data warehouse.
 
-🚀 Quick Start Guide
-1. Environment Setup
+### 🚀 Quick Start Guide
+
+#### 1. Environment Setup
 Create the Conda environment to install all Python packages:
-
+```bash
 conda env create -f environment.yaml
-
+```
 Activate the environment before running any script:
 
 conda activate credit-insights-env
