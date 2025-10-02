@@ -1,5 +1,7 @@
 ## ClearCredit Insights - ETL/ELT Pipeline Project
 
+**Group 7 : Elea Nizam, Noa Sebag, Matteo Nobile, Nathan Novier**
+
 Concept: A fintech analytics platform to help financial institutions better understand consumer credit behaviour. This project demonstrates the data ingestion pipelines into a centralized Snowflake data warehouse.
 
 ### 🚀 Quick Start Guide
@@ -15,7 +17,7 @@ conda activate credit-insights-env
 ```
 Configure credentials: Create a .env file and fill it with your Snowflake account details (SNOWFLAKE_ACCOUNT, SNOWFLAKE_USER, PRIVATE_KEY).
 
-#### 2. Snowflake Setup (One-Time)
+#### 2. Snowflake Setup
 Run the following SQL commands directly in a Snowflake worksheet to prepare the entire environment.
 
 ##### Part 1: Environment Setup (Run as ACCOUNTADMIN)
