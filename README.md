@@ -10,22 +10,18 @@ Create the Conda environment to install all Python packages:
 conda env create -f environment.yaml
 ```
 Activate the environment before running any script:
-
+```bash
 conda activate credit-insights-env
-
+```
 Configure credentials: Create a .env file and fill it with your Snowflake account details (SNOWFLAKE_ACCOUNT, SNOWFLAKE_USER, PRIVATE_KEY).
 
-2. Snowflake Setup (One-Time)
+#### 2. Snowflake Setup (One-Time)
 Run the following SQL commands directly in a Snowflake worksheet to prepare the entire environment.
 
-Part 1: Environment Setup (Run as ACCOUNTADMIN)
-/*
-  Ce script doit être exécuté UNE SEULE FOIS avec le rôle ACCOUNTADMIN
-  pour configurer l'environnement du projet.
-*/
+##### Part 1: Environment Setup (Run as ACCOUNTADMIN)
+```sql
 USE ROLE ACCOUNTADMIN;
 
--- Étape 1 : Créer l'entrepôt, le rôle, et la base de données
 CREATE WAREHOUSE IF NOT EXISTS INGEST;
 CREATE ROLE IF NOT EXISTS INGEST;
 GRANT USAGE ON WAREHOUSE INGEST TO ROLE INGEST;
@@ -39,8 +35,6 @@ USE SCHEMA INGEST;
 GRANT OWNERSHIP ON DATABASE INGEST TO ROLE INGEST;
 GRANT OWNERSHIP ON SCHEMA INGEST.INGEST TO ROLE INGEST;
 
--- Étape 2 : Créer l'utilisateur pour l'ingestion
--- REMPLACEZ 'YOUR_SECURE_PASSWORD_HERE' par un mot de passe sécurisé.
 CREATE OR REPLACE USER INGEST 
     PASSWORD='YOUR_SECURE_PASSWORD_HERE' 
     LOGIN_NAME='INGEST'
@@ -51,18 +45,12 @@ CREATE OR REPLACE USER INGEST
     DEFAULT_ROLE='INGEST';
 
 GRANT ROLE INGEST TO USER INGEST;
-
--- Étape 3 : Donner le rôle INGEST à votre utilisateur principal pour la gestion
 SET MY_USER = CURRENT_USER();
 GRANT ROLE INGEST TO USER IDENTIFIER($MY_USER);
-
-Part 2: Table & Pipe Creation (Run as INGEST)
-After running the script above, switch to the INGEST role (USE ROLE INGEST;) and run the following:
-
-/*
-  Ce script doit être exécuté avec le rôle INGEST pour créer les tables
-  et la pipe dans le bon schéma.
-*/
+```
+##### Part 2: Table & Pipe Creation (Run as INGEST)
+After running the script above, switch to the INGEST role (`USE ROLE INGEST;`) and run the following:
+```sql
 USE ROLE INGEST;
 USE WAREHOUSE INGEST;
 USE DATABASE INGEST;
@@ -106,37 +94,43 @@ CREATE OR REPLACE TABLE CONSUMER_CREDIT_RECORDS_PY_SNOWPIPE (
 -- Create the Pipe for automation
 CREATE OR REPLACE PIPE CONSUMER_CREDIT_RECORDS_PIPE AS 
 COPY INTO CONSUMER_CREDIT_RECORDS_PY_SNOWPIPE
-FROM @%CONSUMER_CREDIT_RECORDS_PY_SNOWPIPE -- Uses the table's internal stage
+FROM @%CONSUMER_CREDIT_RECORDS_PY_SNOWPIPE
 FILE_FORMAT=(TYPE='PARQUET') 
 MATCH_BY_COLUMN_NAME=CASE_SENSITIVE;
+```
 
-▶️ Running the Ingestion Pipelines
+### ▶️ Running the Ingestion Pipelines
 Here are the main commands to generate and load data into Snowflake.
 
-Method A: Simple Streaming (Row-by-Row)
-Good for small tests, but slow for large volumes. Uses py_insert.py.
-
-# Generate and insert 100 records one by one
+##### Method A: SQL Insert
+```bash
 python data_generator.py 100 | python py_insert.py
+```
+##### Method B: Batch
+```bash
+python data_generator.py 100000 | python file_insert.py 10000
+```
 
-Method B: High-Performance Batch (Snowpipe)
-The recommended method. Converts data to Parquet files and uses the Snowpipe SDK to trigger ingestion. Uses py_snowpipe.py.
+##### Method C: Snowpipe
+**The recommended method.**
 
-# Generate 100,000 records and load them in batches of 10,000
+```bash
 python data_generator.py 100000 | python py_snowpipe.py 10000
+```
 
 (Optional) Generating a Compressed File First
-On Linux/macOS:
-
+###### On Linux/macOS:
+```bash
 python data_generator.py 100000 | gzip > data.json.gz
-
+```
 To load from this file:
-
+```bash
 gunzip -c data.json.gz | python py_snowpipe.py 10000
+```
 
-On Windows (PowerShell):
+###### On Windows (PowerShell):
 
-# 1. Generate the file
+```bash
 python data_generator.py 100000 > data.json
-# 2. Compress it
 Compress-Archive -Path .\data.json -DestinationPath data.json.zip
+```
