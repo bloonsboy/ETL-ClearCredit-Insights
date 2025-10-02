@@ -17,7 +17,6 @@ from cryptography.hazmat.primitives import serialization
 
 logging.basicConfig(level=logging.WARN)
 
-
 def connect_snow():
     private_key = "-----BEGIN PRIVATE KEY-----\n" + os.getenv("PRIVATE_KEY") + "\n-----END PRIVATE KEY-----\n"
     p_key = serialization.load_pem_private_key(
@@ -27,7 +26,8 @@ def connect_snow():
     pkb = p_key.private_bytes(
         encoding=serialization.Encoding.DER,
         format=serialization.PrivateFormat.PKCS8,
-        encryption_algorithm=serialization.NoEncryption())
+        encryption_algorithm=serialization.NoEncryption()
+    )
 
     return snowflake.connector.connect(
         account=os.getenv("SNOWFLAKE_ACCOUNT"),
@@ -37,9 +37,8 @@ def connect_snow():
         database="INGEST",
         schema="INGEST",
         warehouse="INGEST",
-        session_parameters={'QUERY_TAG': 'py-snowpipe'}, 
+        session_parameters={'QUERY_TAG': 'py-insert'},
     )
-
 
 def save_to_snowflake(snow, batch, temp_dir, ingest_manager):
     logging.debug('inserting batch to db')
@@ -58,7 +57,7 @@ def save_to_snowflake(snow, batch, temp_dir, ingest_manager):
     file_uri = out_path.as_uri()
     snow.cursor().execute(f"PUT '{file_uri}' {stage_name}")
     os.unlink(out_path)
-    # send the new file to snowpipe to ingest (serverless)
+
     resp = ingest_manager.ingest_files([StagedFile(file_name, None),])
     logging.info(f"response from snowflake for file {file_name}: {resp['responseCode']}")
 
@@ -71,11 +70,13 @@ if __name__ == "__main__":
     temp_dir = tempfile.TemporaryDirectory()
     private_key = "-----BEGIN PRIVATE KEY-----\n" + os.getenv("PRIVATE_KEY") + "\n-----END PRIVATE KEY-----\n"
     host = os.getenv("SNOWFLAKE_ACCOUNT") + ".snowflakecomputing.com"
-    ingest_manager = SimpleIngestManager(account=os.getenv("SNOWFLAKE_ACCOUNT"),
-                                         host=host,
-                                         user=os.getenv("SNOWFLAKE_USER"),
-                                         pipe='INGEST.INGEST.CONSUMER_CREDIT_RECORDS_PIPE',
-                                         private_key=private_key)
+    ingest_manager = SimpleIngestManager(
+        account=os.getenv("SNOWFLAKE_ACCOUNT"),
+        host=host,
+        user=os.getenv("SNOWFLAKE_USER"),
+        pipe='INGEST.INGEST.CONSUMER_CREDIT_RECORDS_PIPE',
+        private_key=private_key
+    )
     for message in sys.stdin:
         if message != '\n':
             record = json.loads(message)
