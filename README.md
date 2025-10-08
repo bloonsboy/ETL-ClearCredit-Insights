@@ -31,7 +31,7 @@ openssl rsa -in rsa_key.p8 -pubout -out rsa_key.pub
 echo "ALTER USER INGEST SET RSA_PUBLIC_KEY='$(cat ./rsa_key.pub)';"
 ```
 
-And then on Snowflak
+And then on Snowflake
 ```sql
 ALTER USER INGEST SET RSA_PUBLIC_KEY={'PUBLIC_KEY'};
 ```
