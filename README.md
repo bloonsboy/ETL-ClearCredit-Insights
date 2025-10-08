@@ -17,6 +17,25 @@ conda activate credit-insights-env
 ```
 Configure credentials: Create a .env file and fill it with your Snowflake account details (SNOWFLAKE_ACCOUNT, SNOWFLAKE_USER, PRIVATE_KEY).
 
+##### Generate RSA Key Pair
+
+On thee terminal 
+```bash
+# Generate private key
+openssl genrsa 4096 | openssl pkcs8 -topk8 -inform PEM -out rsa_key.p8 -nocrypt
+
+# Extract public key
+openssl rsa -in rsa_key.p8 -pubout -out rsa_key.pub
+
+# Generate SQL command to set public key
+echo "ALTER USER INGEST SET RSA_PUBLIC_KEY='$(cat ./rsa_key.pub)';"
+```
+
+And then on Snowflak
+```sql
+ALTER USER INGEST SET RSA_PUBLIC_KEY={'PUBLIC_KEY'};
+```
+
 #### 2. Snowflake Setup
 Run the following SQL commands directly in a Snowflake worksheet to prepare the entire environment.
 
